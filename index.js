@@ -53,14 +53,16 @@ const sendTransaction = (client, bytes, signature) => new Promise(async (resolve
     }
 });
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 (async () => {
-    const SUI_MNEMONIC = readlineSync.question('Input your mnemonic / seed phrase : ');
+    const SUI_MNEMONIC = readlineSync.question('Input your mnemonic / seed phrase: ');
     if (!SUI_MNEMONIC) {
         console.log(chalk.red('Please input the correct mnemonic.'));
         process.exit(0); 
     }
 
-    const amountToSend = readlineSync.question('Input the amount of SUI to send to each address : ');
+    const amountToSend = readlineSync.question('Input the amount of SUI to send to each address: ');
     const amountToSendCleaned = amountToSend.replace(',', '.');
     if (isNaN(parseFloat(amountToSendCleaned))) {
         console.log(chalk.red('Please input a valid amount.'));
@@ -77,7 +79,10 @@ const sendTransaction = (client, bytes, signature) => new Promise(async (resolve
 
     const amountToSendParsed = parseAmount(amountToSendCleaned, 9);
 
-    const addresses = fs.readFileSync('address.txt', 'utf-8').split('\n').filter(Boolean);
+    const addresses = fs.readFileSync('address.txt', 'utf-8')
+        .split('\n')
+        .map(addr => addr.trim())
+        .filter(Boolean);
 
     // Check sender balance
     const senderBalanceResult = await client.getBalance({
@@ -121,5 +126,7 @@ const sendTransaction = (client, bytes, signature) => new Promise(async (resolve
         } catch (error) {
             console.log(chalk.red(`Error sending ${amountToSend} SUI to ${address}: ${error.message}`));
         }
+        // Add a 5-second delay before the next iteration
+        await delay(5000);
     }
 })();
